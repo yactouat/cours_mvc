@@ -117,7 +117,7 @@ Toujours dans notre application de gestion de commandes, quand un utilisateur cl
 
 Dans le cadre d'une application web PHP, le contrôleur est la classe qui va renvoyer une réponse HTTP à l'utilisateur suite à sa requête.
 
-## comment il remplit sa mission
+### comment un contrôleur remplit sa mission
 
 Dans notre application de gestion de commandes, par exemple, le contrôleur va déléguer au modèle la tâche de récupérer les données de la base de données pour créer une commande, l'associer à un utilisateur, renseigner son statut, etc.
 
@@ -162,10 +162,57 @@ class OrderController extends AbstractController
 
 Un contrôleur peut renvoyer au choix une réponse HTTP, une réponse JSON, une réponse XML, une réponse HTML, une réponse de type `text/plain`, etc.
 
-Son rôle n'est pas limité à un type de réponse !
+Retenez juste que son rôle n'est pas limité à un type de réponse !
+
+## la couche Vue
 
 Bien sûr, comme nous sommes en train de parler de MVC, nous allons nous focaliser sur un contrôleur qui va renvoyer du HTML pour répondre à la requête de l'utilisateur final sur le Web, pourquoi ? parce que la couche `Vue` du pattern est constitué par ce que voit cet utilisateur sur son navigateur.
 
-## la couche Vue
+Dans les frameworks PHP modernes, la couche Vue va typiquement:
+
+- définir la structure HTML dans laquelle sera présentée l'information (c'est ce qu'on appelle un template)
+- charger le CSS et le Javascript de la page (c'est ce qu'on appelle des ressources, ou `assets`)
+- recevoir l'information fournie par le contrôleur et l'afficher dans la page
+
+Reprenons l'exemple précédent de contrôleur Symfony, mais cette fois en implémentant une vue qui va effectuer les trois tâches que nous venons de citer !
+
+```php
+// src/Controller/OrderController.php
+namespace App\Controller;
+
+// ...
+use App\Entity\Order;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\Response;
+
+class OrderController extends AbstractController
+{
+    /**
+     * @Route("/order", name="create_order")
+     */
+    public function createOrder(ManagerRegistry $doctrine): Response
+    {
+        $entityManager = $doctrine->getManager();
+
+        $order = new Order();
+        $order->setName('Keyboard');
+        $order->setPrice(1999);
+        $order->setDescription('Ergonomic and stylish!');
+
+        $entityManager->persist($order);
+        $entityManager->flush();
+
+        return new Response(
+            '<p>Saved new order with id '.$order->getId().'</p>',
+            Response::HTTP_OK,
+            ['content-type' => 'text/HTML']
+        );
+
+        return $this->render('order.html.twig', [
+            "order" => $order
+        ]);
+    }
+}
+```
 
 <!-- TODO -->
