@@ -1,0 +1,40 @@
+volumes:
+  mvc-data:
+
+services:
+  
+  db:
+    container_name: db
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_DATABASE: blog_db
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - '3306:3306'
+    volumes:
+      - mvc-data:/var/lib/mysql
+
+  db_seeder:
+    image: mysql:8.0
+    volumes:
+      - ./db.sql:/db.sql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+    entrypoint: [ "bash", "-c", "sleep 10 && mysql --user=root --host=db --port=3306 blog_db < /db.sql && exit"] 
+    depends_on:
+      - db
+
+  phpmyadmin:
+      image: phpmyadmin:latest
+      restart: unless-stopped
+      ports:
+          - 8080:80
+      environment:
+          # we specify that we connect to an arbitrary server with the flag below
+          # "arbitrary" means you're able to specify which database server to use on login page of phpmyadmin      
+          - PMA_ARBITRARY=1
+      depends_on:
+        - db_seeder
